@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+  body {
+    margin: 0
+  }
+    #videoEl {
+      width: 50vw;
+      aspect-ratio: 9 / 16;
+      transform: scaleX(-1);
+    }
+    #imgEl {
+      width: 50vw;
+      aspect-ratio: 9 / 16;
+    }
+    #toggleBtn {
+      background: black;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <p id="viewsEl">total views: 0</p>
+  <p id="streamId">stream id: *id*</p>
+  <video id="videoEl"></video>
+  <br>
+  <button id="toggleBtn">START</button>
+  <script src="socket.io/socket.io.js"></script>
+  <script>
+    let frameRate = prompt('frame rate: ');
+    let name = localStorage.getItem('streamer-name');
+    if(!name){
+      let n = prompt('your username: ');
+      if(!n)location.reload();
+      localStorage.setItem('streamer-name',n)
+    }
+    let live = false;
+    const socket = io();
+    const videoEl = document.getElementById('videoEl');
+    const imageEl = document.getElementById('animate_img');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const viewsEl = document.getElementById('viewsEl');
+    const streamEl = document.getElementById('streamId');
+
+//    const imgEl = document.getElementById('imgEl');
+    let config;
+socket.emit('request-live',name);
+socket.on('live-config',conf=>{
+  config=conf;
+  viewsEl.textContent='total views: '+config.views;
+  streamEl.textContent='streamer id: '+config.id;
+})
+
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: {exact: 'environment'} } })
+    .then(stream => {
+	
+    videoEl.srcObject = stream;
+    videoEl.play();
+    
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    var frameRate = frameRate || 30;
+
+
+
+    function captureFrame() {
+      if(!live)return;
+      canvas.width = videoEl.videoWidth;
+      canvas.height = videoEl.videoHeight;
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+      const frameUrl = canvas.toDataURL('image/jpeg'); // You can change the format if needed
+      sendFrameToServer(frameUrl); // Send the frame to the server
+
+      // Schedule the next frame capture
+      setTimeout(captureFrame, 1000 / frameRate); // Capture frames at the specified frame rate
+     }
+
+function toggleFunc() {
+      console.log('toggled')
+      switch(toggleBtn.textContent){
+        case 'START':
+          live=true;
+          toggleBtn.textContent='STOP';
+          toggleBtn.style.background='red';
+	  captureFrame();
+          break;
+        case 'STOP':
+          live=false;
+          toggleBtn.textContent = 'START';
+          toggleBtn.style.background = 'black';
+          break;
+      }
+}
+
+toggleBtn.addEventListener('click',toggleFunc);
+
+socket.on('force-rest',()=>{
+  console.warn('reconnection notice has been received. force reconection has been initiated...');
+  toggleFunc();
+  console.warn('will automatically be called after 5 second...');
+  setTimeout(()=>{
+    if(toggleBtn.textContent==='STOP')return;
+    toggleFunc();
+  },5000)
+})
+
+})
+
+function sendFrameToServer(frameData) {
+  socket.emit('img-stream',config.id,frameData);
+  //socket.emit('direct-stream',frameData)
+}
+socket.on('disconnect',()=>{
+  location.reload();
+})
+socket.on('views-update',views=>{
+  viewsEl.textContent='total views: '+views
+})
+  </script>
+</body>
+</html>

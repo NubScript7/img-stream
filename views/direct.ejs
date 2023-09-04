@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>gg</title>
+  <style>
+    img {
+      width: 50vw;
+      aspect-ratio: 9 / 16;
+    }
+  </style>
+</head>
+<body>
+  <img>
+  <script src="socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const imgEl = document.querySelector('img');
+    
+    socket.on('direct-stream',frame=>{
+      imgEl.src=frame;
+    })
+    
+  </script>
+</body>
+</html>

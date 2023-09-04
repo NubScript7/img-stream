@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STREAM RECEIVER</title>
+  <style>
+    body {
+      width: 100vw;
+      aspect-ratio: 9 / 16;
+    }
+    #stream {
+      width: 50vw;
+      aspect-ratio: 9 / 16;
+    }
+  </style>
+</head>
+<body>
+  <input id="streamInp" type="text/plain" placeholder="stream id: ">
+  <button id="requestBtn">play</button>
+  <img id="stream">
+  <script src="socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let subscribed = false;
+    const streamEl = document.getElementById('streamInp');
+    const imgEl = document.getElementById('stream');
+    const reqBtn = document.getElementById('requestBtn');
+	let ping = 0;
+	let savedPing = -1;
+        let recon = 0;
+    reqBtn.addEventListener('click',()=>{
+      socket.emit('subscribe',streamEl.value);
+      subscribed=true
+    });
+
+    socket.on('requested-frame',frame=>{
+      imgEl.src=frame;
+      ping++;
+    })
+    setInterval(()=>{
+      if(!subscribed)return;
+      if(savedPing===ping&&recon<3){
+        recon++;
+        alert('connection interrupted. reconnecting...');
+        reqBtn.click();
+      }else if(savedPing===ping&&recon>2){
+        recon++;
+         socket.emit('recon-notice',streamEl.value);
+         reqBtn.click();
+       }else{
+        savedPing=ping;
+      }
+    },5000)
+  </script>
+</body>
+</html>

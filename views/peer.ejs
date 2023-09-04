@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+  body {
+    margin: 0
+  }
+    #videoEl {
+      position: absolute;
+      right: 0px;
+      width: 40vw;
+      aspect-ratio: 9 / 16;
+      transform: scaleX(-1);
+    }
+    #imgEl {
+      width: 100vw;
+      aspect-ratio: 9 / 16;
+    }
+    #toggleBtn {
+      background: black;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <img id="imgEl">
+  <video id="videoEl"></video>
+  <br>
+  <button id="connectBtn">CONNECT</button>
+  <br>
+  <input class="peerId" placeholder="peer id: ">
+  <p class="myId">my Id: -----</p>
+  
+  <script src="socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const frameRate = 3;
+    const videoEl = document.getElementById('videoEl');
+    const imageEl = document.getElementById('imgEl');
+    const connectBtn = document.getElementById('connectBtn');
+    const peerId = document.getElementById('peerId');
+    const myId = document.getElementById('myId');
+//    const imgEl = document.getElementById('imgEl');
+    let config;
+    
+    socket.emit('req-peers');
+    socket.on('peer-config',conf=>{
+      config=conf;
+      myId.textContent = "my Id: "+conf.id;
+    })
+    
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: {exact: 'user'} } })
+    .then(stream => {
+	
+    videoEl.srcObject = stream;
+    videoEl.play();
+    
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    var frameRate = frameRate || 30;
+
+
+
+    function captureFrame() {
+      canvas.width = videoEl.videoWidth;
+      canvas.height = videoEl.videoHeight;
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+      const frameUrl = canvas.toDataURL('image/jpeg'); // You can change the format if needed
+      sendFrameToServer(frameUrl); // Send the frame to the server
+
+      // Schedule the next frame capture
+      setTimeout(captureFrame, 1000 / frameRate); // Capture frames at the specified frame rate
+     }
+
+function connect(){
+  socket.emit('peer-connect',config.id,peerId.value);
+  socket.on('peer-frame',frame=>{
+    imageEl.src=frame;
+  })
+}
+
+connectBtn.addEventListener('click',connect);
+
+socket.on('force-rest',()=>{
+  console.warn('reconnection notice has been received. force reconection has been initiated...');
+  toggleFunc();
+  console.warn('will automatically be called after 5 second...');
+  setTimeout(()=>{
+    if(toggleBtn.textContent==='STOP')return;
+    toggleFunc();
+  },5000)
+})
+
+})
+
+function sendFrameToServer(frameData) {
+  socket.emit('peer-frame',config.id,frameData);
+  //socket.emit('direct-stream',frameData)
+}
+socket.on('disconnect',()=>{
+  location.reload();
+})
+  </script>
+</body>
+</html>
