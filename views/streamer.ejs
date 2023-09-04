@@ -33,12 +33,7 @@
   <script src="socket.io/socket.io.js"></script>
   <script>
     let frameRate = prompt('frame rate: ');
-    let name = localStorage.getItem('streamer-name');
-    if(!name){
-      let n = prompt('your username: ');
-      if(!n)location.reload();
-      localStorage.setItem('streamer-name',n)
-    }
+    let name = 'null'
     let live = false;
     const socket = io();
     const videoEl = document.getElementById('videoEl');
