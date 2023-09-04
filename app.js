@@ -72,7 +72,7 @@ io.on('connection',socket=>{
   })
   socket.on('recon-notice',id=>{
     console.log(socket.id+' sent a recon notice to '+livePorts[id].sid);
-    io.to(livePorts[id].sid).emit('force-rest');
+    //io.to(livePorts[id].sid).emit('force-rest');
   })
   socket.on('req-peers',()=>{
     let id = generateId();
