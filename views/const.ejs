@@ -29,7 +29,7 @@
     
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    const frameRate = 30;
+    const frameRate = localStorage.getItem('CSF') || 30;
 
     function captureFrame() {
       canvas.width = videoEl.videoWidth;
