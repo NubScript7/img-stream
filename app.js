@@ -8,6 +8,8 @@ const livePorts = {};
 const subscribedIds = {};
 const peers = {};
 const subscribedPeers = {};
+const constStream = {};
+const cModeSub = {};
 
 app.set('view engine','ejs');
 app.use(express.json());
@@ -39,6 +41,9 @@ app.get('/streamer',(req,res)=>{
 app.get('/receiver',(req,res)=>{
   res.render('receiver')
 })
+app.get('/const',(req,res)=>{
+  res.render('const')
+})
 
 io.on('connection',socket=>{
 
@@ -62,7 +67,7 @@ io.on('connection',socket=>{
     })
   })
   socket.on('subscribe',id=>{
-    console.log(socket.id+' subscribed to '+id)
+    if(!livePorts[id])return;
     subscribedIds[socket.id]=id;
     livePorts[id].views+=1;
     io.to(livePorts[id].sid).emit('views-update',livePorts[id].views)
@@ -72,7 +77,7 @@ io.on('connection',socket=>{
   })
   socket.on('recon-notice',id=>{
     console.log(socket.id+' sent a recon notice to '+livePorts[id].sid);
-    //io.to(livePorts[id].sid).emit('force-rest');
+    io.to(livePorts[id].sid).emit('force-rest');
   })
   socket.on('req-peers',()=>{
     let id = generateId();
@@ -92,6 +97,22 @@ io.on('connection',socket=>{
   socket.on('peer-connect',(p1id,p2id)=>{
     subscribedPeers[p1id]=p2id;
   })
+  socket.on('c-mode_recon',id=>{
+    constStream[id]={
+      cid: id,
+      sid: socket.id,
+      frame: ''
+    }
+  })
+  socket.on('c-mode_stream',(id,imgData)=>{
+    constStream[id].frame=imgData;
+    Object.keys(cModeSub).forEach(e=>{
+      io.to(e).emit('requested-cframe',constStream[cModeSub[e]].frame)
+    })
+  })
+  socket.on('req_c-stream',id=>{
+    cModeSub[socket.id]=id
+  })
   socket.on('disconnect',()=>{
     console.log(socket.id+' disconnected');
     delete subscribedIds[socket.id]
@@ -104,3 +125,4 @@ io.on('connection',socket=>{
 server.listen(PORT,()=>{
   console.log('server listening at port '+PORT)
 })
+	
