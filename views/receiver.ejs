@@ -55,13 +55,13 @@
       debugr._ping++
     })
     setInterval(()=>{
-      if(!subscribed)return;
+      if(!debugr.subd)return;
       if(debugr.rPing===debugr._ping&&debugr.recon<3){
-        recon++;
+        debugr.recon++
         console.warn('connection interrupted. reconnecting...');
         reqBtn.click();
-      }else if(debugr.rPing===debugr._ping&&debugr.recon>2){
-        recon++;
+      }else if(debugr.rPing===debugr._ping&&debugr.recon>2&&mode.value==='regular'){
+        debugr.recon++;
         socket.emit('recon-notice',streamEl.value);
         reqBtn.click();
        }else{
