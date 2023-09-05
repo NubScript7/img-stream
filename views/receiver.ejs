@@ -6,51 +6,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>STREAM RECEIVER</title>
   <style>
-    body {
-      width: 100vw;
-      aspect-ratio: 9 / 16;
-    }
     #stream {
       width: 50vw;
       aspect-ratio: 9 / 16;
+      border: 1px solid black;
     }
   </style>
 </head>
 <body>
   <input id="streamInp" type="text/plain" placeholder="stream id: ">
-  <button id="requestBtn">play</button>
+  <button id="reqStream">connect</button>
+  <span>Streamer Mode: </span>
+  <select id="mode">
+    <option value="regular">regular</option>
+    <option value="c-mode">c-mode</option>
+  </select>
+  
   <img id="stream">
   <script src="socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    let subscribed = false;
+    const debugr = {
+      _ping:  0,
+      sub: false,
+      rPing: (-1),
+      recon: 0
+    }
     const streamEl = document.getElementById('streamInp');
     const imgEl = document.getElementById('stream');
-    const reqBtn = document.getElementById('requestBtn');
-	let ping = 0;
-	let savedPing = -1;
-        let recon = 0;
+    const reqBtn = document.getElementById('reqStream');
+    const mode = document.getElementById('mode');
+    
     reqBtn.addEventListener('click',()=>{
-      socket.emit('subscribe',streamEl.value);
-      subscribed=true
-    });
-
+      if(mode.value==='regular'){
+        socket.emit('subscribe',streamEl.value)
+      }else if(mode.value==='c-mode'){
+        socket.emit('req_c-stream',streamEl.value)
+      }
+      debugr.subd=true;
+    })
+    
     socket.on('requested-frame',frame=>{
       imgEl.src=frame;
-      ping++;
+      debugr._ping++
+    })
+    socket.on('requested-cframe',frame=>{
+      imgEl.src=frame;
+      debugr._ping++
     })
     setInterval(()=>{
       if(!subscribed)return;
-      if(savedPing===ping&&recon<3){
+      if(debugr.rPing===debugr._ping&&debugr.recon<3){
         recon++;
-        alert('connection interrupted. reconnecting...');
+        console.warn('connection interrupted. reconnecting...');
         reqBtn.click();
-      }else if(savedPing===ping&&recon>2){
+      }else if(debugr.rPing===debugr._ping&&debugr.recon>2){
         recon++;
-         socket.emit('recon-notice',streamEl.value);
-         reqBtn.click();
+        socket.emit('recon-notice',streamEl.value);
+        reqBtn.click();
        }else{
-        savedPing=ping;
+        debugr.rPing=debugr._ping;
       }
     },5000)
   </script>
