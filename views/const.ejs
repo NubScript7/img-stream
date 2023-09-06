@@ -4,9 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CONSTANT MODE</title>
+  <style>
+    #videoEl {
+      width: 30vw;
+      aspect-ratio: 9 / 16;
+    }
+  </style>
 </head>
 <body>
   <video id="videoEl"></video>
+  <p id="info"></p>
   <script src="socket.io/socket.io.js"></script>
   <script>
     const socket = io();
@@ -16,9 +23,13 @@
     }else{
       localStorage.setItem('Stream-Constant-Identifier',id)
     }
+    const sInfo = document.getElementById('info');
     const videoEl = document.getElementById('videoEl');
     const imageEl = document.getElementById('animate_img');
-    
+
+    //customize configuration on dev tools if needed
+    sInfo.textContent='permanent id: '+localStorage.getItem('Stream-Constant-Identifier');
+
     socket.emit('c-mode_recon',id)
     
     navigator.mediaDevices.getUserMedia({ video: {facingMode: {exact: 'environment'}} })
