@@ -48,7 +48,7 @@
       ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
       const frameUrl = canvas.toDataURL('image/jpeg');
-      socket.emit('c-mode_stream',id,frameUrl)
+      socket.volatile.emit('c-mode_stream',id,frameUrl)
 
       setTimeout(captureFrame, 1000 / frameRate);
     }
