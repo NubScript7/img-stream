@@ -64,6 +64,9 @@
         debugr.recon++;
         socket.emit('recon-notice',streamEl.value);
         reqBtn.click();
+       }else if(debugr.rPing===debugr._ping&&debugr.recon>2&&mode.value==='c-mode'){
+        debugr.recon++;
+        reqBtn.click();
        }else{
         debugr.rPing=debugr._ping;
       }
