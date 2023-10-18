@@ -44,15 +44,23 @@
 
 //    const imgEl = document.getElementById('imgEl');
     let config;
-socket.emit('request-live',name);
-socket.on('live-config',conf=>{
-  config=conf;
-  viewsEl.textContent='total views: '+config.views;
-  streamEl.textContent='streamer id: '+config.id;
-})
+    socket.emit('request-live',name);
+    socket.on('live-config',conf=>{
+      config=conf;
+      viewsEl.textContent='total views: '+config.views;
+      streamEl.textContent='streamer id: '+config.id;
+      toggleFunc();
+    })
 
+    const camera_config = {
+      video: {
+        facingMode: {
+          exact: 'environment'
+		}
+	  }
+    }
 
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: {exact: 'environment'} } })
+    navigator.mediaDevices.getUserMedia(camera_config)
     .then(stream => {
 	
     videoEl.srcObject = stream;
@@ -60,9 +68,6 @@ socket.on('live-config',conf=>{
     
     var canvas = document.createElement('canvas');
     var ctx = canvas.getContext('2d');
-    var frameRate = frameRate || 30;
-
-
 
     function captureFrame() {
       if(!live)return;
@@ -77,14 +82,14 @@ socket.on('live-config',conf=>{
       setTimeout(captureFrame, 1000 / frameRate); // Capture frames at the specified frame rate
      }
 
-function toggleFunc() {
+    function toggleFunc() {
       console.log('toggled')
       switch(toggleBtn.textContent){
         case 'START':
           live=true;
           toggleBtn.textContent='STOP';
           toggleBtn.style.background='red';
-	  captureFrame();
+	      captureFrame();
           break;
         case 'STOP':
           live=false;
@@ -92,11 +97,12 @@ function toggleFunc() {
           toggleBtn.style.background = 'black';
           break;
       }
-}
+    }
 
 toggleBtn.addEventListener('click',toggleFunc);
 
 socket.on('force-rest',()=>{
+  if(!socket.connected)return;
   console.warn('reconnection notice has been received. force reconection has been initiated...');
   toggleFunc();
   console.warn('will automatically be called after 5 second...');
@@ -109,11 +115,15 @@ socket.on('force-rest',()=>{
 })
 
 function sendFrameToServer(frameData) {
-  socket.emit('img-stream',config.id,frameData);
+  socket.volatile.emit('img-stream',config.id,frameData);
   //socket.emit('direct-stream',frameData)
 }
 socket.on('disconnect',()=>{
-  location.reload();
+  console.warn('socket disconnected.')
+  socket.emit('request-live',name);
+  if(toggleBtn.textContent === 'STOP'){
+    toggleFunc();
+  }
 })
 socket.on('views-update',views=>{
   viewsEl.textContent='total views: '+views
