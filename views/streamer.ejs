@@ -53,11 +53,11 @@
     })
 
     const camera_config = {
-      video: {
-        facingMode: {
-          exact: 'environment'
-		}
-	  }
+			video: {
+				facingMode: {
+					exact: 'environment'
+				}
+			}
     }
 
     navigator.mediaDevices.getUserMedia(camera_config)
@@ -71,8 +71,8 @@
 
     videoEl.play();
     
-    var canvas = document.createElement('canvas');
-    var ctx = canvas.getContext('2d');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
 
     function captureFrame() {
       if(!live)return;

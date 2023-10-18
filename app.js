@@ -66,37 +66,52 @@ io.on('connection',socket=>{
       io.to(e).emit('requested-frame',livePorts[subscribedIds[e]].frame)
     })
   })
+  
   socket.on('subscribe',id=>{
     if(!livePorts[id])return;
     subscribedIds[socket.id]=id;
     livePorts[id].views+=1;
     io.to(livePorts[id].sid).emit('views-update',livePorts[id].views)
   })
+  
   socket.on('direct-stream',frame=>{
-	socket.broadcast.emit('direct-stream',frame)
+		socket.broadcast.emit('direct-stream',frame)
   })
+  
   socket.on('recon-notice',id=>{
     console.log(socket.id+' sent a recon notice to '+livePorts[id].sid);
     io.to(livePorts[id].sid).emit('force-rest');
   })
-  socket.on('req-peers',()=>{
-    let id = generateId();
-    peers[id]={
+  
+  socket.on('peer-call',()=>{
+  	let id = generateId();
+  	peers[id]={
       id: id,
       sid: socket.id,
+      callee: {
+      	sid: '',
+      	frame: ''
+      },
       frame: ''
     }
-    io.to(socket.id).emit('peer-config',peers[id])
+  	io.to(socket.id).emit('peer-config',peers[id])
   })
-  socket.on('peer-frame',(id,imgData)=>{
-    peers[id].frame=imgData;
-    Object.keys(subscribedPeers).forEach(e=>{
-      io.to(peers[e].sid).emit('peer-frame',peers[subscribedPeers[e]].frame)
-    })
+  
+  socket.on('peer-answer',id=>{
+  	peers[id].callee.sid = socket.id;
+  	io.to(peers[id].sid).emit('peer-answer',peers[id])
   })
-  socket.on('peer-connect',(p1id,p2id)=>{
-    subscribedPeers[p1id]=p2id;
+  
+  socket.on('peer-frame',(id,imgData,role)=>{
+  	if(role === 'callee'){
+  		peers[id].callee.frame = imgData;
+  		io.to(peers[id].sid).emit('peer-frame',imgData);
+  	}else if(role === 'caller'){
+  		peers[id].frame = imgData;
+  		io.to(peers[id].callee.sid).emit('peer-frame',imgData);
+  	}
   })
+  
   socket.on('c-mode_recon',id=>{
     constStream[id]={
       cid: id,
@@ -104,18 +119,23 @@ io.on('connection',socket=>{
       frame: ''
     }
   })
+  
   socket.on('c-mode_stream',(id,imgData)=>{
     constStream[id].frame=imgData;
     Object.keys(cModeSub).forEach(e=>{
       io.to(e).emit('requested-cframe',constStream[cModeSub[e]].frame)
     })
   })
+  
   socket.on('req_c-stream',id=>{
     cModeSub[socket.id]=id
   })
+  
   socket.on('disconnect',()=>{
     console.log(socket.id+' disconnected');
-    delete subscribedIds[socket.id]
+    if(socket.id in subscribedIds){
+			delete subscribedIds[socket.id]
+    }
   })
 
 })
