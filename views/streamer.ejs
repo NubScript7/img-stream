@@ -32,7 +32,7 @@
   <button id="toggleBtn">START</button>
   <script src="socket.io/socket.io.js"></script>
   <script>
-    let frameRate = prompt('frame rate: ');
+    let frameRate = 12
     let name = 'null'
     let live = false;
     const socket = io();
@@ -62,8 +62,13 @@
 
     navigator.mediaDevices.getUserMedia(camera_config)
     .then(stream => {
-	
-    videoEl.srcObject = stream;
+
+    if('srcObject' in videoEl){
+      videoEl.srcObject = stream;
+    }else{
+      videoEl.src = window.URL.createObjectURL(stream)
+    }
+
     videoEl.play();
     
     var canvas = document.createElement('canvas');
