@@ -40,7 +40,7 @@
   <script>
     const socket = io();
     const frameRate = 12;
-    const callBtn = document.getElementById('callEl');
+    const callBtn = document.getElementById('callBtn');
     const imageEl = document.getElementById('imgEl');
     const answerBtn = document.getElementById('answerBtn');
     const peerId = document.getElementById('peerId');
@@ -84,6 +84,7 @@
 			socket.emit('peer-call');
 			socket.on('peer-config',conf=>{
 				myId.textContent = conf.id;
+				config = conf;
 				captureFrame({
 					canvas,
 					ctx,
@@ -91,6 +92,11 @@
 					role: 'caller'
 				});
 			})
+		})
+		
+		answerBtn.addEventListener('click',()=>{
+			answerBtn.disabled = true;
+			callBtn.disabled = true;
 		})
 		
 		function sendFrameToServer(id,img,role){
@@ -107,15 +113,30 @@
       ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
       const frameUrl = canvas.toDataURL('image/jpeg');
-      sendFrameToServer(obj.id,frameUrl,obj.role); // Send the frame to the server
+      sendFrameToServer(obj.id,frameUrl,obj.role);
 
-      // Schedule the next frame capture
-      setTimeout(captureFrame, 1000 / frameRate); // Capture frames at the specified frame rate
-     }
-     
-     socket.on('peer-frame',img=>{
+      setTimeout(captureFrame, 1000 / frameRate);
+    }
+    
+    socket.on('disconnect',()=>{
+			socket.on('connected',()=>{
+				socket.emit('peer-reconnect',config)
+			})
+    })
+    
+    socket.on('peer-cancelled',()=>{
+    	answerBtn.disabled = false;
+			callBtn.disabled = false;
+    })
+    
+    socket.on('peer-disconnect',()=>{
+			answerBtn.disabled = false;
+			callBtn.disabled = false;
+    })
+    
+    socket.on('peer-frame',img=>{
 			imageEl.src = img;
-     })
+    })
 
 
   </script>
