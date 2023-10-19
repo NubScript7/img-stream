@@ -85,12 +85,7 @@
 			socket.on('peer-config',conf=>{
 				myId.textContent = conf.id;
 				config = conf;
-				captureFrame({
-					canvas,
-					ctx,
-					id: conf.id,
-					role: 'caller'
-				});
+				captureFrame(canvas, ctx, 'caller');
 			})
 		})
 		
@@ -111,13 +106,13 @@
 			console.warn(err.message)
 		}
 		
-    function captureFrame(obj) {
+    function captureFrame(canvas,ctx,role) {
       canvas.width = videoEl.videoWidth;
       canvas.height = videoEl.videoHeight;
       ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
       const frameUrl = canvas.toDataURL('image/jpeg');
-      sendFrameToServer(obj.id,frameUrl,obj.role);
+      sendFrameToServer(config.id,frameUrl,role);
 
       setTimeout(captureFrame, 1000 / frameRate);
     }
