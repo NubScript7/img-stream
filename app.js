@@ -7,7 +7,6 @@ const PORT = process.env.PORT || 3000
 const livePorts = {};
 const subscribedIds = {};
 const peers = {};
-const subscribedPeers = {};
 const constStream = {};
 const cModeSub = {};
 
@@ -86,9 +85,11 @@ io.on('connection',socket=>{
   socket.on('peer-call',()=>{
   	let id = generateId();
   	peers[id]={
+  		recon: false,
       id: id,
       sid: socket.id,
       callee: {
+      	recon: false,
       	sid: '',
       	frame: ''
       },
@@ -112,6 +113,12 @@ io.on('connection',socket=>{
   	}
   })
   
+  socket.on('peer-reconnect',config=>{
+  	if(config.id in peers !== true)return io.to(socket.id).emit('peer-cancelled');
+  	peers[config.id].recon = true;
+  	peers[config.id].sid = socket.id;
+  })
+  
   socket.on('c-mode_recon',id=>{
     constStream[id]={
       cid: id,
@@ -131,12 +138,25 @@ io.on('connection',socket=>{
     cModeSub[socket.id]=id
   })
   
-  socket.on('disconnect',()=>{
-    console.log(socket.id+' disconnected');
-    if(socket.id in subscribedIds){
+	socket.on('disconnect',()=>{
+		console.log(socket.id+' disconnected');
+		if(socket.id in subscribedIds){
 			delete subscribedIds[socket.id]
-    }
-  })
+		}
+
+
+		setTimeout(()=>{
+			Object.keys(peers).forEach(e=>{
+				if(e.sid === socket.id){
+					if(e.recon)return;
+					e.callee.sid!==''?
+					io.to(e.callee.sid).emit('peer-disconnect'):
+					false;
+					delete peers[e]
+				}
+			})
+		},10000)
+	})
 
 })
 
