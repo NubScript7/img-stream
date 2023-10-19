@@ -33,8 +33,8 @@
   <button id="answerBtn">ANSWER</button>
   <button id="callBtn">CALL</button>
   <br>
-  <input class="peerId" placeholder="peer id: ">
-  <p class="myId">my Id: -----</p>
+  <input id="peerId" placeholder="peer id: ">
+  <p id="myId">my Id: -----</p>
   
   <script src="socket.io/socket.io.js"></script>
   <script>
@@ -95,8 +95,12 @@
 		})
 		
 		answerBtn.addEventListener('click',()=>{
+			if(!peerId.value)return;
 			answerBtn.disabled = true;
 			callBtn.disabled = true;
+			
+			socket.emit('peer-answer',peerId.value);
+			
 		})
 		
 		function sendFrameToServer(id,img,role){
@@ -132,6 +136,11 @@
     socket.on('peer-disconnect',()=>{
 			answerBtn.disabled = false;
 			callBtn.disabled = false;
+    })
+
+    socket.on('peer-answer',conf=>{
+      myId.textContent = '[peer as callee]';
+      config = conf;
     })
     
     socket.on('peer-frame',img=>{
