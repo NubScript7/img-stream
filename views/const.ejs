@@ -37,7 +37,8 @@
 
     videoEl.srcObject = stream;
     videoEl.play();
-    
+
+    const quality = 0.5
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const frameRate = localStorage.getItem('CSF') || 30;
@@ -47,7 +48,7 @@
       canvas.height = videoEl.videoHeight;
       ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
-      const frameUrl = canvas.toDataURL('image/jpeg');
+      const frameUrl = canvas.toDataURL('image/jpeg', quality);
       socket.volatile.emit('c-mode_stream',id,frameUrl)
 
       setTimeout(captureFrame, 1000 / frameRate);
