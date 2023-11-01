@@ -14,8 +14,10 @@
 <body>
   <video id="videoEl"></video>
   <p id="info"></p>
+  <script src="lz-string.min.js"></script>
   <script src="socket.io/socket.io.js"></script>
   <script>
+    const lz = LZString;
     const socket = io();
     const id = localStorage.getItem('Stream-Constant-Identifier') || prompt('permanent id:');
     if(!id){
@@ -48,7 +50,8 @@
       ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
       const frameUrl = canvas.toDataURL('image/jpeg', 0.1);
-      socket.volatile.emit('c-mode_stream',id,frameUrl)
+      const minFrame = lz.compress(frameUrl);
+      socket.volatile.emit('c-mode_stream',id,minFrame);
 
       setTimeout(captureFrame, 1000 / frameRate);
     }

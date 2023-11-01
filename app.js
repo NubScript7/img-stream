@@ -1,3 +1,4 @@
+const ip = require("./ip");
 const express = require('express');
 const app = express();
 const server = require('http').Server(app);
@@ -25,6 +26,17 @@ function generateId() {
 
   return id;
 }
+
+function staticFile(app,fileName){
+  let fws = "/" + fileName;
+  app.get(fws,(req,res)=>{
+    res.sendFile(__dirname + fws)
+  })
+}
+
+//expose required client files
+staticFile(app,'lz-string.min.js')
+
 app.get('/direct',(req,res)=>{
   res.render('direct')
 })
@@ -163,6 +175,7 @@ io.on('connection',socket=>{
 
 
 server.listen(PORT,()=>{
-  console.log('server listening at port '+PORT)
+  console.log('server listening at port '+PORT);
+  console.log('ip domain: '+ip.address());
 })
 	

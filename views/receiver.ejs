@@ -23,8 +23,10 @@
   </select>
   
   <img id="stream">
+  <script src="lz-string.min.js"></script>
   <script src="socket.io/socket.io.js"></script>
   <script>
+    const lz = LZString;
     const socket = io();
     const debugr = {
       _ping:  0,
@@ -51,7 +53,8 @@
       debugr._ping++
     })
     socket.on('requested-cframe',frame=>{
-      imgEl.src=frame;
+      let dframe = lz.decompress(frame);
+      imgEl.src=dframe;
       debugr._ping++
     })
     setInterval(()=>{
